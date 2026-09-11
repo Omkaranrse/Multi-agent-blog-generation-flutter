@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "741507716892",
+    "project_id": "blog-multiagent",
+    "storage_bucket": "blog-multiagent.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741507716892:android:d1f3212cdedf645b3c4cd9",
+        "android_client_info": {
+          "package_name": "com.omkar.blogmultiagent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQ34QoykAOz3s-P_LN-CuzBjLnpeyfrNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
