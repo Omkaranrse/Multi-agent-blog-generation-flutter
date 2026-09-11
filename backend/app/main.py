@@ -57,7 +57,15 @@ def _get_firebase_auth():
     from firebase_admin import auth as fb_auth
 
     if not firebase_admin._apps:
-        firebase_admin.initialize_app()  # uses Application Default Credentials
+        project_id = (
+            os.environ.get("GOOGLE_CLOUD_PROJECT")
+            or os.environ.get("GCP_PROJECT_ID")
+        )
+        if not project_id:
+            raise ValueError(
+                "GCP_PROJECT_ID or GOOGLE_CLOUD_PROJECT must be set when auth is enabled"
+            )
+        firebase_admin.initialize_app(options={"projectId": project_id})
     return fb_auth
 
 

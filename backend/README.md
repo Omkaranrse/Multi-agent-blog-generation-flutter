@@ -55,6 +55,9 @@ JSON as a secret file. Set `GOOGLE_APPLICATION_CREDENTIALS` to the mounted
 secret-file path, for example `/etc/secrets/firebase-admin.json`. Never use a
 Firebase web config or client API key as backend credentials.
 
+Also set `GCP_PROJECT_ID=blog-multiagent` (or
+`GOOGLE_CLOUD_PROJECT=blog-multiagent`) so Firebase Admin can verify ID tokens.
+
 ## Known gaps - read before you rely on this
 
 - **The reconnect path in `main.py` is a stub.** If a client disconnects
