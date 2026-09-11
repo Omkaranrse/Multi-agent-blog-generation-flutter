@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/blog_session.dart';
@@ -27,8 +26,7 @@ class BlogWsService {
   }) async {
     session.setConnecting();
 
-    final token =
-        kIsWeb ? null : await FirebaseAuth.instance.currentUser?.getIdToken();
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     final uri = Uri.parse('$baseWsUrl/ws/blog').replace(
       queryParameters: token != null ? {'token': token} : null,
     );
@@ -46,7 +44,10 @@ class BlogWsService {
       onError: (e) => session.setError('Connection error: $e'),
       onDone: () {
         if (session.phase != SessionPhase.done) {
-          session.setError('Connection closed unexpectedly.');
+          final code = _channel?.closeCode;
+          final reason = _channel?.closeReason;
+          session.setError(
+              'Connection closed${code == null ? '' : ' ($code)'}${reason == null ? '' : ': $reason'}');
         }
       },
     );

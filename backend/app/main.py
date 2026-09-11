@@ -21,6 +21,7 @@ least-exercised part of this file.)
 
 import os
 import uuid
+import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,6 +32,7 @@ from .checkpointer_factory import get_checkpointer
 from .graph import build_blog_graph
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Blog Multi-Agent API")
 
@@ -73,9 +75,16 @@ async def _authenticate(websocket: WebSocket) -> str:
 
     try:
         fb_auth = _get_firebase_auth()
+    except Exception:
+        logger.exception("Firebase Admin initialization failed")
+        await websocket.close(code=1011, reason="Firebase Admin is not configured")
+        raise WebSocketDisconnect(code=1011)
+
+    try:
         decoded = fb_auth.verify_id_token(token)
         return decoded["uid"]
     except Exception:
+        logger.exception("Firebase ID token verification failed")
         await websocket.close(code=4401, reason="Invalid auth token")
         raise WebSocketDisconnect(code=4401)
 
@@ -88,19 +97,26 @@ def _serialize_interrupt(chunk: dict) -> dict:
 
 
 async def _drain_stream(websocket: WebSocket, stream, thread_id: str, config: dict) -> None:
-    async for chunk in stream:
-        if "__interrupt__" in chunk:
-            await websocket.send_json(_serialize_interrupt(chunk))
-            return  # pause; wait for the client's next "resume" message
-        for node_name in chunk:
-            await websocket.send_json({"type": "node_update", "node": node_name})
+    try:
+        async for chunk in stream:
+            if "__interrupt__" in chunk:
+                await websocket.send_json(_serialize_interrupt(chunk))
+                return  # pause; wait for the client's next "resume" message
+            for node_name in chunk:
+                await websocket.send_json({"type": "node_update", "node": node_name})
 
-    # Stream ended with no interrupt -> the graph reached END.
-    snapshot = await _graph.aget_state(config)
-    await websocket.send_json({
-        "type": "final",
-        "blog": snapshot.values.get("final_blog", ""),
-    })
+        # Stream ended with no interrupt -> the graph reached END.
+        snapshot = await _graph.aget_state(config)
+        await websocket.send_json({
+            "type": "final",
+            "blog": snapshot.values.get("final_blog", ""),
+        })
+    except Exception:
+        logger.exception("Blog graph execution failed")
+        await websocket.send_json({
+            "type": "error",
+            "message": "The blog agent failed while processing this step. Check the backend logs.",
+        })
 
 
 @app.websocket("/ws/blog")

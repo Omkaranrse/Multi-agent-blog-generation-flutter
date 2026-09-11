@@ -29,10 +29,10 @@ flutter create --org com.yourcompany --project-name blog_multiagent_app .
 
 flutter pub get
 
-For local web development, Firebase is not required. Set `REQUIRE_AUTH=false`
-in the backend `.env`; the web client connects without an auth token. The iOS
-credential is already included at `ios/Runner/GoogleService-Info.plist` and is
-used when running on iOS.
+Firebase Auth is configured for web, iOS, and Android with anonymous sign-in.
+Enable **Anonymous** under Firebase Console → Authentication → Sign-in method.
+For local development, use `REQUIRE_AUTH=false`; production should set it to
+`true` and configure Firebase Admin credentials on the backend.
 
 Firebase authentication can be added later for a production deployment by
 adding `firebase_core` and `firebase_auth`, running `flutterfire configure`,

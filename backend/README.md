@@ -50,6 +50,11 @@ or
 4. Flutter needs to pass a Firebase Auth ID token as a query param:
    `wss://your-backend/ws/blog?token=<idToken>`.
 
+For Render, set `REQUIRE_AUTH=true` and add a Firebase Admin service-account
+JSON as a secret file. Set `GOOGLE_APPLICATION_CREDENTIALS` to the mounted
+secret-file path, for example `/etc/secrets/firebase-admin.json`. Never use a
+Firebase web config or client API key as backend credentials.
+
 ## Known gaps - read before you rely on this
 
 - **The reconnect path in `main.py` is a stub.** If a client disconnects

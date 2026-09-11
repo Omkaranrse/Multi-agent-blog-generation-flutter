@@ -12,7 +12,12 @@
           "package_name": "com.omkar.blogmultiagent"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "741507716892-qdmgc0992vsah4g65vrhru2p2i3h6dki.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAQ34QoykAOz3s-P_LN-CuzBjLnpeyfrNQ"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "741507716892-qdmgc0992vsah4g65vrhru2p2i3h6dki.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "741507716892-l0clg3getl0mkih3h9jajbmugm4g57s7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.omkar.blog-multi-agent"
+              }
+            }
+          ]
         }
       }
     }
