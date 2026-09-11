@@ -29,24 +29,16 @@ flutter create --org com.yourcompany --project-name blog_multiagent_app .
 
 flutter pub get
 
-Firebase Auth is configured for web, iOS, and Android with anonymous sign-in.
-Enable **Anonymous** under Firebase Console → Authentication → Sign-in method.
-For local development, use `REQUIRE_AUTH=false`; production should set it to
-`true` and configure Firebase Admin credentials on the backend.
-
-Firebase authentication can be added later for a production deployment by
-adding `firebase_core` and `firebase_auth`, running `flutterfire configure`,
-and passing the generated options to `Firebase.initializeApp`.
-line and pass it to `Firebase.initializeApp`.
+Firebase Auth is configured for web, iOS, and Android with Google sign-in.
+Enable **Google** under Firebase Console → Authentication → Sign-in method and
+add `blog-multiagent.web.app` under Authorized domains. Production requires
+`REQUIRE_AUTH=true` and Firebase Admin credentials on the backend.
 
 ## Pointing at your backend
 
-`lib/screens/session_screen.dart` has a `_backendWsUrl` constant -
-`ws://localhost:8000` for local dev against `uvicorn --reload`, or
-`wss://your-service-xyz.run.app` once deployed to Cloud Run. This is a
-placeholder constant, not real config management - if you're shipping to
-more than one environment, move it to `--dart-define` or a config file
-before this grows.
+`lib/screens/session_screen.dart` reads `BACKEND_WS_URL` from `--dart-define`.
+Use `ws://localhost:8000` for local development and the deployed `wss://`
+Render URL for Firebase Hosting.
 
 ## What's genuinely untested here
 
@@ -71,5 +63,5 @@ stable releases as of early 2026 - run `flutter pub outdated` and bump if
   session either way; wiring reconnect through is a matter of passing the
   saved `thread_id` back into `BlogWsService.start()` and handling the
   backend's reconnect path once that TODO (see backend README) is filled in.
-- Anonymous auth only. Fine for a prototype, not for anything where a
-  person's blog history should survive a reinstall.
+- Google authentication and Firestore history are enabled. Firestore rules
+  scope each user's posts to their Firebase UID.

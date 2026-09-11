@@ -21,7 +21,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 
 def get_checkpointer() -> BaseCheckpointSaver:
-    backend = os.environ.get("CHECKPOINT_BACKEND", "memory").lower()
+    backend = os.environ.get("CHECKPOINT_BACKEND", "memory").strip().lower() or "memory"
 
     if backend == "memory":
         return InMemorySaver()

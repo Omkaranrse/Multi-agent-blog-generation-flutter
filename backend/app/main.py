@@ -148,12 +148,19 @@ async def blog_ws(websocket: WebSocket):
 
         existing = await _graph.aget_state(config)
         if existing.values.get("topic"):
-            # TODO: reconnect path. We have prior state for this thread_id;
-            # a full implementation should re-send the last interrupt payload
-            # here instead of falling through, so the client can redraw the
-            # review screen after a dropped connection. Untested - verify
-            # before depending on it.
-            pass
+            if existing.values.get("user_id") != uid:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "This session belongs to another user.",
+                })
+                await websocket.close(code=4403)
+                return
+            await websocket.send_json({
+                "type": "error",
+                "message": "Session reconnect is not supported yet. Start a new session.",
+            })
+            await websocket.close(code=4409)
+            return
         else:
             if "topic" not in first_message:
                 await websocket.send_json({"type": "error", "message": "Missing 'topic'"})
