@@ -58,13 +58,12 @@ Firebase web config or client API key as backend credentials.
 Also set `GCP_PROJECT_ID=blog-multiagent` (or
 `GOOGLE_CLOUD_PROJECT=blog-multiagent`) so Firebase Admin can verify ID tokens.
 
-## Known gaps - read before you rely on this
+## Current Limitations
 
-- **The reconnect path in `main.py` is a stub.** If a client disconnects
-  mid-interrupt and reconnects, the server currently doesn't re-send the
-  pending interrupt payload (there's a `TODO` marking exactly where to add
-  it). Session state itself is safe in Firestore either way - this only
-  affects redrawing the UI after a dropped connection.
+- **Reconnect is intentionally rejected.** Existing thread IDs are ownership
+  checked, but the current client must start a new session after a disconnect.
+  This avoids leaving the UI in an ambiguous state until full interrupt
+  restoration is implemented.
 - **The Firestore checkpointer is a third-party package**
   (`langgraph-checkpoint-firestore`), not something Anthropic or the
   LangChain team maintains. It's real and published, but test your actual
@@ -75,7 +74,7 @@ Also set `GCP_PROJECT_ID=blog-multiagent` (or
   public deploy - set `CORS_ORIGINS` once you have a real Flutter web
   origin.
 
-## Deploying to Cloud Run
+## Deploying to Render or Cloud Run
 
 ```bash
 gcloud run deploy blog-multiagent \

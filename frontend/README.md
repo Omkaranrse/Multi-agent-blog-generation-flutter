@@ -19,8 +19,8 @@ The Firebase project configured in `.firebaserc` is `blog-multiagent`. The
 backend must be deployed separately and supplied as a secure `wss://` URL;
 the default `ws://localhost:8000` is for local development only.
 
-This isn't a `flutter create` scaffold - it's the `lib/` source and
-`pubspec.yaml` only. To get a runnable project:
+This repository contains a complete Flutter project. If recreating the
+platform folders from source, use:
 
 ```bash
 flutter create --org com.yourcompany --project-name blog_multiagent_app .
@@ -40,28 +40,19 @@ add `blog-multiagent.web.app` under Authorized domains. Production requires
 Use `ws://localhost:8000` for local development and the deployed `wss://`
 Render URL for Firebase Hosting.
 
-## What's genuinely untested here
-
-I wrote this against the backend's WebSocket message shapes, but I have not
-run `flutter analyze` or `flutter run` against it - there is no Flutter SDK
-in the environment I built this in. Before you trust it:
+## Validation
 
 ```bash
 flutter analyze
-flutter run -d chrome   # fastest platform to iterate on
+flutter build web --release \
+  --dart-define=BACKEND_WS_URL=wss://blog-multiagent-api.onrender.com
 ```
 
-Package versions in `pubspec.yaml` (`web_socket_channel`, `flutter_markdown`,
-`firebase_core`/`firebase_auth`) are pinned to what I believe are current
-stable releases as of early 2026 - run `flutter pub outdated` and bump if
-`flutter pub get` complains about version solving.
+Run `flutter pub outdated` periodically to review dependency updates.
 
-## Known gaps
+## Current Limitations
 
-- No reconnect handling - if the WebSocket drops mid-session, the UI shows
-  an error rather than resuming. The backend's checkpointer preserves the
-  session either way; wiring reconnect through is a matter of passing the
-  saved `thread_id` back into `BlogWsService.start()` and handling the
-  backend's reconnect path once that TODO (see backend README) is filled in.
+- Reconnect is intentionally rejected by the backend. A dropped session shows
+  an error and the user starts a new session.
 - Google authentication and Firestore history are enabled. Firestore rules
   scope each user's posts to their Firebase UID.
