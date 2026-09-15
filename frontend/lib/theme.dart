@@ -286,6 +286,26 @@ MarkdownStyleSheet buildReaderStyleSheet(BuildContext context) {
       backgroundColor: tokens.bgInput,
       color: tokens.textPrimary,
     ),
+    tableHead: GoogleFonts.plusJakartaSans(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      color: tokens.textPrimary,
+    ),
+    tableBody: GoogleFonts.plusJakartaSans(
+      fontSize: 14,
+      color: tokens.textPrimary,
+      height: 1.5,
+    ),
+    tableHeadAlign: TextAlign.left,
+    tableCellsPadding: const EdgeInsets.symmetric(
+      horizontal: Spacing.md + 2,
+      vertical: Spacing.sm + 2,
+    ),
+    tableBorder: TableBorder.all(
+      color: tokens.border,
+      width: 1,
+      borderRadius: BorderRadius.circular(Radii.sm),
+    ),
   );
 }
 

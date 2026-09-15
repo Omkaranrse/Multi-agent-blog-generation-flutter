@@ -48,8 +48,9 @@ RESEARCHER_PROMPT = ChatPromptTemplate.from_messages([
 structured research outline. Include:
 1. 5-7 key points the blog should cover
 2. Important facts, statistics, or examples for each point
-3. A suggested angle or hook
-Be concise. Use bullet points. Do NOT write the full blog yet."""),
+3. A suggested comparison, taxonomy, or breakdown table (with columns and sample rows) to organize key concepts
+4. A suggested angle or hook
+Be concise. Use bullet points and markdown tables where appropriate. Do NOT write the full blog yet."""),
     ("user", "Topic: {topic}, Audience: {audience}, {revision_hints}, Write the research outline now."),
 ])
 
@@ -82,6 +83,7 @@ engaging blog post.
 Rules:
 - Length: 500-800 words
 - Structured: catchy title, intro hook, 3-5 sections with H2 headings, conclusion
+- Include at least one clear, well-structured Markdown table (e.g., comparing approaches, component breakdown, or pros/cons) to make the content scannable and insightful
 - Tone: clear, friendly, suited to the target audience
 - Use markdown formatting
 - Do NOT add a 'word count' line at the end"""),
@@ -124,6 +126,7 @@ Take the draft and produce the FINAL polished version. Specifically:
 - Tighten wordy sentences
 - Improve flow and transitions between sections
 - Make the title and introduction more compelling if needed
+- Preserve and ensure well-formatted markdown tables and clean headings
 - Keep the same structure and markdown formatting
 - Blog wording should sound human, not AI-generated. Avoid special characters and overly complex or fancy words.
 Output only the final polished blog post. Do not include any commentary."""),

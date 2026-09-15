@@ -290,13 +290,7 @@ class _SessionScreenState extends State<SessionScreen>
             child: SingleChildScrollView(
               child: MarkdownBody(
                 data: session.reviewText ?? '',
-                styleSheet: MarkdownStyleSheet(
-                  p: TextStyle(color: tokens.textPrimary, height: 1.65, fontSize: 15),
-                  h1: TextStyle(color: tokens.textPrimary, fontSize: 22, fontWeight: FontWeight.w700),
-                  h2: TextStyle(color: tokens.textPrimary, fontSize: 18, fontWeight: FontWeight.w600),
-                  h3: TextStyle(color: tokens.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
-                  listBullet: TextStyle(color: tokens.textPrimary),
-                ),
+                styleSheet: buildReaderStyleSheet(context),
                 selectable: true,
               ),
             ),
