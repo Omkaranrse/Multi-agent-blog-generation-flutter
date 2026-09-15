@@ -16,10 +16,15 @@ from langchain_groq import ChatGroq
 # LLM factory
 # ---------------------------------------------------------------------------
 
-def get_llm(model_name: str = "openai/gpt-oss-20b", temperature: float = 0.5) -> ChatGroq:
+def get_llm(model_name: str = "llama-3.3-70b-versatile", temperature: float = 0.5) -> ChatGroq:
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         raise ValueError("GROQ_API_KEY environment variable is not set.")
+    if api_key.startswith("your_") or len(api_key) < 20:
+        raise ValueError(
+            "GROQ_API_KEY looks like a placeholder. "
+            "Get a real key from https://console.groq.com/keys"
+        )
     return ChatGroq(
         model=model_name,
         api_key=api_key,
