@@ -65,8 +65,8 @@ class _AuthScreenState extends State<AuthScreen>
             end: Alignment.bottomRight,
             colors: [
               AppColors.background,
-              Color(0xFF0F1318),
-              Color(0xFF111620),
+              Color(0xFF181512),
+              Color(0xFF1A1713),
             ],
           ),
         ),
@@ -90,7 +90,7 @@ class _AuthScreenState extends State<AuthScreen>
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [AppColors.accent, Color(0xFF5BA8E8)],
+                          colors: [AppColors.accent, Color(0xFFDFB478)],
                         ),
                         borderRadius: BorderRadius.circular(Radii.xl),
                         boxShadow: [
@@ -101,20 +101,20 @@ class _AuthScreenState extends State<AuthScreen>
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.edit_rounded,
+                      child: const Icon(Icons.history_edu_rounded,
                           color: AppColors.onAccent, size: 30),
                     ),
                   ),
                   const SizedBox(height: Spacing.xxxl),
 
                   // Title
-                  Text('Welcome to Draftline',
+                  Text('The Editorial Desk',
                       style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: Spacing.md),
 
                   // Subtitle
                   Text(
-                    'AI-powered blog writing with human control.\nSign in to get started.',
+                    'Autonomous multi-agent writing with editorial control.\nSign in to commission your first draft.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
@@ -122,18 +122,18 @@ class _AuthScreenState extends State<AuthScreen>
 
                   // Features
                   const _FeatureRow(
-                    icon: Icons.search_rounded,
-                    label: 'Research · Write · Edit',
+                    icon: Icons.explore_outlined,
+                    label: 'The Cartographer · The Wordsmith · The Critic',
                   ),
                   const SizedBox(height: Spacing.sm),
                   const _FeatureRow(
                     icon: Icons.check_circle_outline_rounded,
-                    label: 'You review every step',
+                    label: 'Human-in-the-loop review at every juncture',
                   ),
                   const SizedBox(height: Spacing.sm),
                   const _FeatureRow(
                     icon: Icons.cloud_outlined,
-                    label: 'History synced across devices',
+                    label: 'Manuscript history synced to cloud',
                   ),
                   const SizedBox(height: Spacing.xxxl),
 

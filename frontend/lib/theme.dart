@@ -34,34 +34,38 @@ abstract final class Radii {
 // ---------------------------------------------------------------------------
 
 abstract final class AppColors {
-  // Backgrounds
-  static const background = Color(0xFF0D0F12);
-  static const surface = Color(0xFF15181D);
-  static const surfaceElevated = Color(0xFF1C2027);
+  // Backgrounds - The Editorial Desk
+  static const background = Color(0xFF131210);      // Lampblack (soot charcoal with warm amber undertone)
+  static const surface = Color(0xFF1D1B17);         // Bookbinder Board
+  static const surfaceElevated = Color(0xFF26231E); // Raised docket card
+  static const surfaceHighlight = Color(0xFF302B24);// Hover / subtle active fill
 
-  // Borders
-  static const border = Color(0xFF2A3038);
-  static const borderSubtle = Color(0xFF1F242C);
+  // Borders & Rules
+  static const border = Color(0xFF2E2A24);          // Blind Deboss rule
+  static const borderSubtle = Color(0xFF221F1A);    // Subtle hairline
+  static const borderHover = Color(0xFF474035);     // Card hover border
 
-  // Brand
-  static const accent = Color(0xFF7CC4FF);
-  static const onAccent = Color(0xFF082033);
+  // Brand / Editorial Accent
+  static const accent = Color(0xFFC4975A);          // Bookmark Gold / Vellum Ochre
+  static const onAccent = Color(0xFF131210);        // Lampblack on gold
+  static const accentSubtle = Color(0xFF292318);    // Warm gold wash / badge bg
+  static const accentGlow = Color(0x33C4975A);      // Soft focus glow
 
-  // Text
-  static const textPrimary = Color(0xFFF1F3F5);
-  static const textSecondary = Color(0xFFA4ACB8);
-  static const textMuted = Color(0xFF6B7280);
+  // Typography - Warm Editorial Text
+  static const textPrimary = Color(0xFFEFECE6);     // Book Linen (unbleached paper white)
+  static const textSecondary = Color(0xFF938C82);   // Graphite (pencil draft annotation)
+  static const textMuted = Color(0xFF6B655D);       // Faded lead
 
   // Semantic
-  static const working = Color(0xFF7CC4FF);
-  static const needsInput = Color(0xFFFFC56D);
-  static const done = Color(0xFF83D6A3);
-  static const danger = Color(0xFFFF8C87);
+  static const working = Color(0xFFC4975A);
+  static const needsInput = Color(0xFFE5A96A);
+  static const done = Color(0xFF7CB88F);
+  static const danger = Color(0xFFD4695D);
 
-  // Blog reader (light surface for rendered markdown)
-  static const readerBackground = Color(0xFFF7F5F0);
-  static const readerText = Color(0xFF24272B);
-  static const readerHeading = Color(0xFF111315);
+  // Blog reader (warm archival paper surface for rendered markdown)
+  static const readerBackground = Color(0xFFFAF7F2);
+  static const readerText = Color(0xFF22201D);
+  static const readerHeading = Color(0xFF131210);
 }
 
 // ---------------------------------------------------------------------------
@@ -70,29 +74,50 @@ abstract final class AppColors {
 
 MarkdownStyleSheet buildReaderStyleSheet() {
   return MarkdownStyleSheet(
-    p: const TextStyle(
-        color: AppColors.readerText, fontSize: 16, height: 1.65),
-    h1: const TextStyle(
-        color: AppColors.readerHeading,
-        fontSize: 30,
-        height: 1.2,
-        fontWeight: FontWeight.w800),
-    h2: const TextStyle(
-        color: AppColors.readerHeading,
-        fontSize: 22,
-        height: 1.3,
-        fontWeight: FontWeight.w700),
-    h3: const TextStyle(
-        color: AppColors.readerHeading,
-        fontSize: 18,
-        fontWeight: FontWeight.w700),
-    blockquote: const TextStyle(
-        color: Color(0xFF555C66), fontStyle: FontStyle.italic),
+    p: GoogleFonts.plusJakartaSans(
+      color: AppColors.readerText,
+      fontSize: 16,
+      height: 1.7,
+    ),
+    h1: GoogleFonts.fraunces(
+      color: AppColors.readerHeading,
+      fontSize: 30,
+      height: 1.25,
+      fontWeight: FontWeight.w700,
+    ),
+    h2: GoogleFonts.fraunces(
+      color: AppColors.readerHeading,
+      fontSize: 22,
+      height: 1.3,
+      fontWeight: FontWeight.w600,
+    ),
+    h3: GoogleFonts.fraunces(
+      color: AppColors.readerHeading,
+      fontSize: 18,
+      height: 1.35,
+      fontWeight: FontWeight.w600,
+    ),
+    blockquote: GoogleFonts.fraunces(
+      color: const Color(0xFF5A534B),
+      fontSize: 16,
+      fontStyle: FontStyle.italic,
+      height: 1.6,
+    ),
     blockquoteDecoration: const BoxDecoration(
-        border: Border(
-            left: BorderSide(color: AppColors.accent, width: 3))),
+      border: Border(
+        left: BorderSide(color: AppColors.accent, width: 3),
+      ),
+    ),
     blockquotePadding: const EdgeInsets.only(left: Spacing.lg),
-    listBullet: const TextStyle(color: AppColors.readerText, fontSize: 16),
+    listBullet: GoogleFonts.plusJakartaSans(
+      color: AppColors.readerText,
+      fontSize: 16,
+    ),
+    code: GoogleFonts.jetBrainsMono(
+      fontSize: 13,
+      backgroundColor: const Color(0xFFEDE9E0),
+      color: const Color(0xFF22201D),
+    ),
   );
 }
 
@@ -102,6 +127,13 @@ BoxDecoration readerPaneDecoration() {
     color: AppColors.readerBackground,
     borderRadius: BorderRadius.circular(Radii.md),
     border: Border.all(color: AppColors.border),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.2),
+        blurRadius: 16,
+        offset: const Offset(0, 4),
+      ),
+    ],
   );
 }
 
@@ -111,7 +143,7 @@ BoxDecoration readerPaneDecoration() {
 
 ThemeData buildAppTheme() {
   final base = ThemeData.dark(useMaterial3: true);
-  final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
+  final textTheme = GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
     bodyColor: AppColors.textPrimary,
     displayColor: AppColors.textPrimary,
   );
@@ -127,18 +159,30 @@ ThemeData buildAppTheme() {
       error: AppColors.danger,
     ),
     textTheme: textTheme.copyWith(
-      displaySmall: textTheme.displaySmall?.copyWith(
+      displaySmall: GoogleFonts.fraunces(
         fontSize: 38,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -1.2,
-        height: 1.1,
-      ),
-      headlineSmall: textTheme.headlineSmall?.copyWith(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w600,
         letterSpacing: -0.6,
+        height: 1.15,
+        color: AppColors.textPrimary,
       ),
-      titleLarge: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+      headlineSmall: GoogleFonts.fraunces(
+        fontSize: 26,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.4,
+        height: 1.25,
+        color: AppColors.textPrimary,
+      ),
+      titleLarge: GoogleFonts.fraunces(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      ),
+      titleMedium: GoogleFonts.plusJakartaSans(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      ),
       bodyLarge: textTheme.bodyLarge?.copyWith(
         color: AppColors.textSecondary,
         height: 1.6,
@@ -147,10 +191,11 @@ ThemeData buildAppTheme() {
         color: AppColors.textSecondary,
         height: 1.5,
       ),
-      labelMedium: textTheme.labelMedium?.copyWith(
+      labelMedium: GoogleFonts.jetBrainsMono(
+        fontSize: 11,
         color: AppColors.textSecondary,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.4,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 1.2,
       ),
     ),
     appBarTheme: const AppBarTheme(
@@ -161,13 +206,13 @@ ThemeData buildAppTheme() {
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.surface,
-      indicatorColor: AppColors.accent.withValues(alpha: .12),
+      indicatorColor: AppColors.accent.withValues(alpha: 0.15),
       surfaceTintColor: Colors.transparent,
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
         final isSelected = states.contains(WidgetState.selected);
         return TextStyle(
           fontSize: 12,
-          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
           color: isSelected ? AppColors.accent : AppColors.textSecondary,
         );
       }),
@@ -215,7 +260,11 @@ ThemeData buildAppTheme() {
         minimumSize: const Size(0, 52),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(Radii.md)),
-        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+        textStyle: GoogleFonts.plusJakartaSans(
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+          letterSpacing: 0.3,
+        ),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
