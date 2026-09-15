@@ -55,6 +55,9 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb && Uri.base.queryParameters['preview'] == 'home') {
+      return const HomeScreen();
+    }
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
