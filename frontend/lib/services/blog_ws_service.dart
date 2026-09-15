@@ -19,6 +19,9 @@ class BlogWsService {
   WebSocketChannel? _channel;
   StreamSubscription? _sub;
 
+  /// Timeout for the initial connection handshake.
+  static const _connectTimeout = Duration(seconds: 15);
+
   Future<void> start({
     required BlogSession session,
     required String topic,
@@ -26,28 +29,58 @@ class BlogWsService {
   }) async {
     session.setConnecting();
 
-    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    String? token;
+    try {
+      token = await FirebaseAuth.instance.currentUser
+          ?.getIdToken()
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      session.setError('Could not retrieve auth token: $e');
+      return;
+    }
+
     final uri = Uri.parse('$baseWsUrl/ws/blog').replace(
       queryParameters: token != null ? {'token': token} : null,
     );
 
     try {
       _channel = WebSocketChannel.connect(uri);
+      // Wait for the connection to be ready (or fail fast).
+      await _channel!.ready.timeout(_connectTimeout);
+    } on TimeoutException {
+      session.setError(
+          'Connection timed out. The server may be starting up — try again in a moment.');
+      return;
     } catch (e) {
-      session.setError('Could not connect: $e');
+      session.setError('Could not connect to the server: $e');
       return;
     }
 
     _sub = _channel!.stream.listen(
-      (raw) => session.handleServerMessage(
-          jsonDecode(raw as String) as Map<String, dynamic>),
+      (raw) {
+        try {
+          session.handleServerMessage(
+              jsonDecode(raw as String) as Map<String, dynamic>);
+        } catch (e) {
+          session.setError('Received an unexpected message from the server.');
+        }
+      },
       onError: (e) => session.setError('Connection error: $e'),
       onDone: () {
-        if (session.phase != SessionPhase.done) {
+        if (session.phase != SessionPhase.done &&
+            session.phase != SessionPhase.error) {
           final code = _channel?.closeCode;
           final reason = _channel?.closeReason;
-          session.setError(
-              'Connection closed${code == null ? '' : ' ($code)'}${reason == null ? '' : ': $reason'}');
+          if (code == 4401) {
+            session.setError(
+                'Authentication failed. Please sign out and sign back in.');
+          } else if (code == 4429) {
+            session.setError(
+                'Too many sessions. Please wait a minute before trying again.');
+          } else {
+            session.setError(
+                'Connection closed${code == null ? '' : ' ($code)'}${reason == null || reason.isEmpty ? '' : ': $reason'}');
+          }
         }
       },
     );

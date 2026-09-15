@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 
@@ -54,6 +55,7 @@ class _SessionScreenState extends State<SessionScreen>
     _session.removeListener(_saveCompletedPost);
     _ws.dispose();
     _feedbackController.dispose();
+    _session.dispose();
     super.dispose();
   }
 
@@ -69,6 +71,24 @@ class _SessionScreenState extends State<SessionScreen>
     );
   }
 
+  void _copyToClipboard() {
+    final blog = _session.finalBlog;
+    if (blog == null || blog.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: blog));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(children: [
+            Icon(Icons.check_rounded, color: AppColors.done, size: 18),
+            SizedBox(width: Spacing.sm),
+            Text('Copied to clipboard'),
+          ]),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
@@ -81,6 +101,18 @@ class _SessionScreenState extends State<SessionScreen>
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
+          actions: [
+            Consumer<BlogSession>(builder: (_, session, __) {
+              if (session.phase != SessionPhase.done) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                tooltip: 'Copy blog to clipboard',
+                icon: const Icon(Icons.copy_rounded, size: 20),
+                onPressed: _copyToClipboard,
+              );
+            }),
+          ],
         ),
         body: Consumer<BlogSession>(
           builder: (context, session, _) => LayoutBuilder(
@@ -91,7 +123,8 @@ class _SessionScreenState extends State<SessionScreen>
                 switchInCurve: Curves.easeOut,
                 child: Padding(
                   key: ValueKey(session.phase),
-                  padding: EdgeInsets.fromLTRB(horizontal, 12, horizontal, 32),
+                  padding: EdgeInsets.fromLTRB(
+                      horizontal, Spacing.md, horizontal, Spacing.xxxl),
                   child: _buildBody(session, constraints.maxWidth),
                 ),
               );
@@ -127,23 +160,23 @@ class _SessionScreenState extends State<SessionScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
+        const SizedBox(height: Spacing.xl),
         Text('Your post is taking shape',
             style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
+        const SizedBox(height: Spacing.sm),
         Text(
             'The agents are working in sequence. You will be asked to review the important decisions.',
             style: Theme.of(context).textTheme.bodyLarge),
-        const SizedBox(height: 48),
+        const SizedBox(height: Spacing.huge),
         _PipelineStepper(
             active: stage, completedThrough: stage.index - 1, pulse: _pulse),
         const SizedBox(height: 56),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Spacing.xxl),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(Radii.md),
             border: Border.all(color: AppColors.border),
           ),
           child: Row(
@@ -162,14 +195,15 @@ class _SessionScreenState extends State<SessionScreen>
                   children: [
                     Text(_stageTitle(stage),
                         style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Spacing.xs),
                     Text(_stageDescription(stage),
                         style: Theme.of(context).textTheme.bodyMedium),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Text('5–20 sec', style: Theme.of(context).textTheme.labelMedium),
+              const SizedBox(width: Spacing.md),
+              Text('5–20 sec',
+                  style: Theme.of(context).textTheme.labelMedium),
             ],
           ),
         ),
@@ -185,7 +219,7 @@ class _SessionScreenState extends State<SessionScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 8),
+        const SizedBox(height: Spacing.sm),
         _PipelineStepper(
           active: isResearch ? _AgentStage.research : _AgentStage.write,
           completedThrough: isResearch ? -1 : 0,
@@ -197,63 +231,102 @@ class _SessionScreenState extends State<SessionScreen>
                 .textTheme
                 .labelMedium
                 ?.copyWith(color: AppColors.needsInput)),
-        const SizedBox(height: 10),
+        const SizedBox(height: Spacing.md),
         Text(title, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
+        const SizedBox(height: Spacing.sm),
         Text(
             session.reviewInstructions ??
                 'Give this a quick read, then choose how to continue.',
             style: Theme.of(context).textTheme.bodyLarge),
-        const SizedBox(height: 24),
+        const SizedBox(height: Spacing.xxl),
         Expanded(
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(Spacing.xxl),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(Radii.md),
               border: Border.all(color: AppColors.border),
             ),
             child: SingleChildScrollView(
-              child: SelectableText(session.reviewText ?? '',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              child: MarkdownBody(
+                data: session.reviewText ?? '',
+                styleSheet: MarkdownStyleSheet(
+                  p: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppColors.textPrimary,
                         height: 1.7,
-                      )),
+                      ),
+                  h1: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700),
+                  h2: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700),
+                  h3: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600),
+                  listBullet: const TextStyle(color: AppColors.textPrimary),
+                ),
+                selectable: true,
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: Spacing.xl),
         TextField(
           controller: _feedbackController,
           maxLines: 2,
           decoration: const InputDecoration(
             labelText: 'Optional revision note',
-            hintText: 'Tell the agent what to change...',
+            hintText: 'Tell the agent what to change…',
             prefixIcon: Icon(Icons.chat_bubble_outline_rounded),
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _submitRevision(),
-                icon: const Icon(Icons.tune_rounded, size: 18),
-                label: const Text('Request revision'),
+        const SizedBox(height: Spacing.md),
+        LayoutBuilder(builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 500;
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _approve,
+                  icon: const Icon(Icons.check_rounded),
+                  label: const Text('Approve and continue'),
+                ),
+                const SizedBox(height: Spacing.sm),
+                OutlinedButton.icon(
+                  onPressed: _submitRevision,
+                  icon: const Icon(Icons.tune_rounded, size: 18),
+                  label: const Text('Request revision'),
+                ),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _submitRevision,
+                  icon: const Icon(Icons.tune_rounded, size: 18),
+                  label: const Text('Request revision'),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
-              child: ElevatedButton.icon(
-                onPressed: _approve,
-                icon: const Icon(Icons.check_rounded),
-                label: const Text('Approve and continue'),
+              const SizedBox(width: Spacing.md),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: _approve,
+                  icon: const Icon(Icons.check_rounded),
+                  label: const Text('Approve and continue'),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ],
     );
   }
@@ -262,7 +335,7 @@ class _SessionScreenState extends State<SessionScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 8),
+        const SizedBox(height: Spacing.sm),
         _PipelineStepper(
             active: _AgentStage.edit, completedThrough: 2, pulse: _pulse),
         const SizedBox(height: 40),
@@ -270,56 +343,38 @@ class _SessionScreenState extends State<SessionScreen>
           children: [
             const Icon(Icons.check_circle_rounded,
                 color: AppColors.done, size: 22),
-            const SizedBox(width: 10),
-            Text('Finished asset',
+            const SizedBox(width: Spacing.md),
+            Text('Finished',
                 style: Theme.of(context)
                     .textTheme
                     .labelMedium
                     ?.copyWith(color: AppColors.done)),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _copyToClipboard,
+              icon: const Icon(Icons.copy_rounded, size: 16),
+              label: const Text('Copy'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textSecondary,
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: Spacing.md),
         Text('Your post is ready.',
             style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 24),
+        const SizedBox(height: Spacing.xxl),
         Expanded(
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F5F0),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 28, vertical: 30),
+            decoration: readerPaneDecoration(),
             child: SingleChildScrollView(
-              child: Markdown(
+              child: MarkdownBody(
                 data: session.finalBlog ?? '',
-                shrinkWrap: true,
-                styleSheet: MarkdownStyleSheet(
-                  p: const TextStyle(
-                      color: Color(0xFF24272B), fontSize: 16, height: 1.65),
-                  h1: const TextStyle(
-                      color: Color(0xFF111315),
-                      fontSize: 30,
-                      height: 1.2,
-                      fontWeight: FontWeight.w800),
-                  h2: const TextStyle(
-                      color: Color(0xFF111315),
-                      fontSize: 22,
-                      height: 1.3,
-                      fontWeight: FontWeight.w700),
-                  h3: const TextStyle(
-                      color: Color(0xFF111315),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700),
-                  blockquote: const TextStyle(
-                      color: Color(0xFF555C66), fontStyle: FontStyle.italic),
-                  blockquoteDecoration: const BoxDecoration(
-                      border: Border(
-                          left:
-                              BorderSide(color: Color(0xFF7CC4FF), width: 3))),
-                  blockquotePadding: const EdgeInsets.only(left: 16),
-                ),
+                styleSheet: buildReaderStyleSheet(),
+                selectable: true,
               ),
             ),
           ),
@@ -335,7 +390,7 @@ class _SessionScreenState extends State<SessionScreen>
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(color: AppColors.danger.withValues(alpha: .35)),
         ),
         child: Column(
@@ -343,14 +398,14 @@ class _SessionScreenState extends State<SessionScreen>
           children: [
             const Icon(Icons.cloud_off_rounded,
                 color: AppColors.danger, size: 30),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.lg),
             Text('The session paused unexpectedly',
                 style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sm),
             Text(session.errorMessage ?? 'Something went wrong.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 20),
+            const SizedBox(height: Spacing.xl),
             OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Return home')),
@@ -367,7 +422,15 @@ class _SessionScreenState extends State<SessionScreen>
 
   void _submitRevision() {
     final feedback = _feedbackController.text.trim();
-    if (feedback.isEmpty) return;
+    if (feedback.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Write a revision note before requesting changes'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     _feedbackController.clear();
     _ws.requestRevision(feedback);
   }
@@ -392,6 +455,10 @@ class _SessionScreenState extends State<SessionScreen>
       };
 }
 
+// ---------------------------------------------------------------------------
+// Pipeline Stepper
+// ---------------------------------------------------------------------------
+
 class _PipelineStepper extends StatelessWidget {
   const _PipelineStepper(
       {required this.active,
@@ -410,34 +477,40 @@ class _PipelineStepper extends StatelessWidget {
       Icons.edit_note_rounded,
       Icons.auto_fix_high_rounded
     ];
-    return Row(
-      children: [
-        for (var i = 0; i < labels.length; i++) ...[
-          Expanded(
-            child: Row(children: [
-              _StepIcon(
-                index: i,
-                active: active.index == i,
-                complete: completedThrough >= i,
-                icon: icons[i],
-                pulse: pulse,
-              ),
-              const SizedBox(width: 10),
-              Flexible(
-                  child: Text(labels[i],
-                      style: Theme.of(context).textTheme.labelLarge)),
-            ]),
-          ),
-          if (i < labels.length - 1)
+
+    return LayoutBuilder(builder: (context, constraints) {
+      final showLabels = constraints.maxWidth > 400;
+      return Row(
+        children: [
+          for (var i = 0; i < labels.length; i++) ...[
             Expanded(
-                child: Container(
-                    height: 1,
-                    color: completedThrough >= i
-                        ? AppColors.done
-                        : AppColors.border)),
+              child: Row(children: [
+                _StepIcon(
+                  index: i,
+                  active: active.index == i,
+                  complete: completedThrough >= i,
+                  icon: icons[i],
+                  pulse: pulse,
+                ),
+                if (showLabels) ...[
+                  const SizedBox(width: Spacing.md),
+                  Flexible(
+                      child: Text(labels[i],
+                          style: Theme.of(context).textTheme.labelLarge)),
+                ],
+              ]),
+            ),
+            if (i < labels.length - 1)
+              Expanded(
+                  child: Container(
+                      height: 1,
+                      color: completedThrough >= i
+                          ? AppColors.done
+                          : AppColors.border)),
+          ],
         ],
-      ],
-    );
+      );
+    });
   }
 }
 

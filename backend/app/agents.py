@@ -6,18 +6,23 @@ on purpose so graph.py can call them from LangGraph nodes without any
 LangGraph-specific code leaking in here.
 """
 
+import logging
 import os
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # LLM factory
 # ---------------------------------------------------------------------------
 
-def get_llm(model_name: str = "llama-3.3-70b-versatile", temperature: float = 0.5) -> ChatGroq:
-    api_key = os.environ.get("GROQ_API_KEY")
+_DEFAULT_MODEL = "openai/gpt-oss-20b"
+
+
+def get_llm(temperature: float = 0.5) -> ChatGroq:
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
     if not api_key:
         raise ValueError("GROQ_API_KEY environment variable is not set.")
     if api_key.startswith("your_") or len(api_key) < 20:
@@ -25,6 +30,8 @@ def get_llm(model_name: str = "llama-3.3-70b-versatile", temperature: float = 0.
             "GROQ_API_KEY looks like a placeholder. "
             "Get a real key from https://console.groq.com/keys"
         )
+    model_name = os.environ.get("GROQ_MODEL", _DEFAULT_MODEL).strip() or _DEFAULT_MODEL
+    logger.info("Using Groq model: %s", model_name)
     return ChatGroq(
         model=model_name,
         api_key=api_key,
