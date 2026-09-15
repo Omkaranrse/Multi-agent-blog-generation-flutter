@@ -76,14 +76,15 @@ class _SessionScreenState extends State<SessionScreen>
     if (blog == null || blog.isEmpty) return;
     Clipboard.setData(ClipboardData(text: blog));
     if (mounted) {
+      final tokens = AppThemeTokens.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(children: [
-            Icon(Icons.check_rounded, color: AppColors.done, size: 18),
-            SizedBox(width: Spacing.sm),
-            Text('Copied to clipboard'),
+            Icon(Icons.check_rounded, color: tokens.success, size: 18),
+            const SizedBox(width: Spacing.sm),
+            const Text('Copied to clipboard'),
           ]),
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -91,41 +92,52 @@ class _SessionScreenState extends State<SessionScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = AppThemeTokens.of(context);
+
     return ChangeNotifierProvider.value(
       value: _session,
       child: Scaffold(
+        backgroundColor: tokens.bgPrimary,
         appBar: AppBar(
-          title: Text(widget.topic, overflow: TextOverflow.ellipsis),
+          title: Text(
+            widget.topic,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: tokens.textPrimary,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          backgroundColor: tokens.bgPrimary,
           leading: IconButton(
             tooltip: 'Leave session',
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: Icon(Icons.arrow_back_rounded, color: tokens.textMuted),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
-          actions: [
-            Consumer<BlogSession>(builder: (_, session, __) {
-              if (session.phase != SessionPhase.done) {
-                return const SizedBox.shrink();
-              }
-              return IconButton(
-                tooltip: 'Copy blog to clipboard',
-                icon: const Icon(Icons.copy_rounded, size: 20),
-                onPressed: _copyToClipboard,
-              );
-            }),
-          ],
         ),
-        body: Consumer<BlogSession>(
-          builder: (context, session, _) => LayoutBuilder(
-            builder: (context, constraints) {
-              final horizontal = constraints.maxWidth < 720 ? 20.0 : 64.0;
-              return AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                switchInCurve: Curves.easeOut,
-                child: Padding(
-                  key: ValueKey(session.phase),
-                  padding: EdgeInsets.fromLTRB(
-                      horizontal, Spacing.md, horizontal, Spacing.xxxl),
-                  child: _buildBody(session, constraints.maxWidth),
+        body: SafeArea(
+          child: Consumer<BlogSession>(
+            builder: (context, session, _) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 780),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.xxl,
+                      vertical: Spacing.lg,
+                    ),
+                    child: switch (session.phase) {
+                      SessionPhase.idle ||
+                      SessionPhase.connecting =>
+                        _buildConnecting(tokens),
+                      SessionPhase.running => _buildRunning(tokens, session),
+                      SessionPhase.awaitingResearchReview ||
+                      SessionPhase.awaitingDraftReview =>
+                        _buildReview(tokens, session),
+                      SessionPhase.done => _buildDone(tokens, session),
+                      SessionPhase.error => _buildError(tokens, session),
+                    },
+                  ),
                 ),
               );
             },
@@ -135,49 +147,52 @@ class _SessionScreenState extends State<SessionScreen>
     );
   }
 
-  Widget _buildBody(BlogSession session, double width) {
-    final content = switch (session.phase) {
-      SessionPhase.idle ||
-      SessionPhase.connecting ||
-      SessionPhase.running =>
-        _buildRunning(session),
-      SessionPhase.awaitingResearchReview ||
-      SessionPhase.awaitingDraftReview =>
-        _buildReview(session),
-      SessionPhase.done => _buildDone(session),
-      SessionPhase.error => _buildError(session),
-    };
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: width > 1000 ? 920 : 760),
-        child: content,
-      ),
+  Widget _buildConnecting(AppThemeTokens tokens) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: tokens.accent,
+          ),
+        ),
+        const SizedBox(height: Spacing.xl),
+        Text(
+          'Connecting to the team…',
+          style: TextStyle(fontSize: 16, color: tokens.textPrimary),
+        ),
+        const SizedBox(height: Spacing.xs),
+        Text(
+          'Starting a dedicated graph runner for this post.',
+          style: TextStyle(fontSize: 14, color: tokens.textMuted),
+        ),
+      ],
     );
   }
 
-  Widget _buildRunning(BlogSession session) {
+  Widget _buildRunning(AppThemeTokens tokens, BlogSession session) {
     final stage = _stageForNode(session.activeNode);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: Spacing.xl),
-        Text('Your post is taking shape',
-            style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: Spacing.sm),
-        Text(
-            'The agents are working in sequence. You will be asked to review the important decisions.',
-            style: Theme.of(context).textTheme.bodyLarge),
         const SizedBox(height: Spacing.huge),
         _PipelineStepper(
-            active: stage, completedThrough: stage.index - 1, pulse: _pulse),
+          active: stage,
+          completedThrough: stage.index - 1,
+          pulse: _pulse,
+          tokens: tokens,
+        ),
         const SizedBox(height: 56),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(Spacing.xxl),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: tokens.bgSurface,
             borderRadius: BorderRadius.circular(Radii.md),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: tokens.border),
           ),
           child: Row(
             children: [
@@ -185,25 +200,37 @@ class _SessionScreenState extends State<SessionScreen>
                 animation: _pulse,
                 builder: (_, child) =>
                     Transform.scale(scale: _pulse.value, child: child),
-                child: const Icon(Icons.circle,
-                    size: 12, color: AppColors.working),
+                child: Icon(Icons.circle, size: 12, color: tokens.accent),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_stageTitle(stage),
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      _stageTitle(stage),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: Spacing.xs),
-                    Text(_stageDescription(stage),
-                        style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      _stageDescription(stage),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: tokens.textMuted,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: Spacing.md),
-              Text('5–20 sec',
-                  style: Theme.of(context).textTheme.labelMedium),
+              Text(
+                '5–20 sec',
+                style: TextStyle(fontSize: 12, color: tokens.textMuted),
+              ),
             ],
           ),
         ),
@@ -211,11 +238,11 @@ class _SessionScreenState extends State<SessionScreen>
     );
   }
 
-  Widget _buildReview(BlogSession session) {
+  Widget _buildReview(AppThemeTokens tokens, BlogSession session) {
     final isResearch = session.phase == SessionPhase.awaitingResearchReview;
     final title = isResearch ? 'Review the research' : 'Review the draft';
-    final eyebrow =
-        isResearch ? 'YOUR INPUT · 01 OF 02' : 'YOUR INPUT · 02 OF 02';
+    final eyebrow = isResearch ? 'Step 1 of 2: Research review' : 'Step 2 of 2: Draft review';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -224,58 +251,58 @@ class _SessionScreenState extends State<SessionScreen>
           active: isResearch ? _AgentStage.research : _AgentStage.write,
           completedThrough: isResearch ? -1 : 0,
           pulse: _pulse,
+          tokens: tokens,
         ),
-        const SizedBox(height: 42),
-        Text(eyebrow,
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(color: AppColors.needsInput)),
-        const SizedBox(height: Spacing.md),
-        Text(title, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: Spacing.sm),
+        const SizedBox(height: 36),
         Text(
-            session.reviewInstructions ??
-                'Give this a quick read, then choose how to continue.',
-            style: Theme.of(context).textTheme.bodyLarge),
-        const SizedBox(height: Spacing.xxl),
+          eyebrow,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: tokens.warning,
+          ),
+        ),
+        const SizedBox(height: Spacing.xs),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: tokens.textPrimary,
+          ),
+        ),
+        const SizedBox(height: Spacing.xs),
+        Text(
+          session.reviewInstructions ??
+              'Give this a quick read, then choose how to continue.',
+          style: TextStyle(fontSize: 14, color: tokens.textMuted),
+        ),
+        const SizedBox(height: Spacing.lg),
         Expanded(
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(Spacing.xxl),
+            padding: const EdgeInsets.all(Spacing.xl),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: tokens.bgSurface,
               borderRadius: BorderRadius.circular(Radii.md),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: tokens.border),
             ),
             child: SingleChildScrollView(
               child: MarkdownBody(
                 data: session.reviewText ?? '',
                 styleSheet: MarkdownStyleSheet(
-                  p: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textPrimary,
-                        height: 1.7,
-                      ),
-                  h1: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700),
-                  h2: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700),
-                  h3: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600),
-                  listBullet: const TextStyle(color: AppColors.textPrimary),
+                  p: TextStyle(color: tokens.textPrimary, height: 1.65, fontSize: 15),
+                  h1: TextStyle(color: tokens.textPrimary, fontSize: 22, fontWeight: FontWeight.w700),
+                  h2: TextStyle(color: tokens.textPrimary, fontSize: 18, fontWeight: FontWeight.w600),
+                  h3: TextStyle(color: tokens.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                  listBullet: TextStyle(color: tokens.textPrimary),
                 ),
                 selectable: true,
               ),
             ),
           ),
         ),
-        const SizedBox(height: Spacing.xl),
+        const SizedBox(height: Spacing.lg),
         TextField(
           controller: _feedbackController,
           maxLines: 2,
@@ -294,7 +321,11 @@ class _SessionScreenState extends State<SessionScreen>
               children: [
                 ElevatedButton.icon(
                   onPressed: _approve,
-                  icon: const Icon(Icons.check_rounded),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: tokens.accent,
+                    foregroundColor: tokens.onAccent,
+                  ),
+                  icon: const Icon(Icons.check_rounded, size: 18),
                   label: const Text('Approve and continue'),
                 ),
                 const SizedBox(height: Spacing.sm),
@@ -320,7 +351,11 @@ class _SessionScreenState extends State<SessionScreen>
                 flex: 2,
                 child: ElevatedButton.icon(
                   onPressed: _approve,
-                  icon: const Icon(Icons.check_rounded),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: tokens.accent,
+                    foregroundColor: tokens.onAccent,
+                  ),
+                  icon: const Icon(Icons.check_rounded, size: 18),
                   label: const Text('Approve and continue'),
                 ),
               ),
@@ -331,49 +366,60 @@ class _SessionScreenState extends State<SessionScreen>
     );
   }
 
-  Widget _buildDone(BlogSession session) {
+  Widget _buildDone(AppThemeTokens tokens, BlogSession session) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: Spacing.sm),
         _PipelineStepper(
-            active: _AgentStage.edit, completedThrough: 2, pulse: _pulse),
-        const SizedBox(height: 40),
+          active: _AgentStage.edit,
+          completedThrough: 2,
+          pulse: _pulse,
+          tokens: tokens,
+        ),
+        const SizedBox(height: 36),
         Row(
           children: [
-            const Icon(Icons.check_circle_rounded,
-                color: AppColors.done, size: 22),
-            const SizedBox(width: Spacing.md),
-            Text('Finished',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(color: AppColors.done)),
+            Icon(Icons.check_circle_rounded, color: tokens.success, size: 20),
+            const SizedBox(width: Spacing.sm),
+            Text(
+              'Finished',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: tokens.success,
+              ),
+            ),
             const Spacer(),
             TextButton.icon(
               onPressed: _copyToClipboard,
               icon: const Icon(Icons.copy_rounded, size: 16),
               label: const Text('Copy'),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
+                foregroundColor: tokens.textMuted,
               ),
             ),
           ],
         ),
-        const SizedBox(height: Spacing.md),
-        Text('Your post is ready.',
-            style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: Spacing.xxl),
+        const SizedBox(height: Spacing.sm),
+        Text(
+          'Your post is ready.',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: tokens.textPrimary,
+          ),
+        ),
+        const SizedBox(height: Spacing.xl),
         Expanded(
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-                horizontal: 28, vertical: 30),
-            decoration: readerPaneDecoration(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            decoration: readerPaneDecoration(context),
             child: SingleChildScrollView(
               child: MarkdownBody(
                 data: session.finalBlog ?? '',
-                styleSheet: buildReaderStyleSheet(),
+                styleSheet: buildReaderStyleSheet(context),
                 selectable: true,
               ),
             ),
@@ -383,32 +429,40 @@ class _SessionScreenState extends State<SessionScreen>
     );
   }
 
-  Widget _buildError(BlogSession session) {
+  Widget _buildError(AppThemeTokens tokens, BlogSession session) {
     return Center(
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
-        padding: const EdgeInsets.all(28),
+        constraints: const BoxConstraints(maxWidth: 500),
+        padding: const EdgeInsets.all(Spacing.xxl),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: tokens.bgSurface,
           borderRadius: BorderRadius.circular(Radii.md),
-          border: Border.all(color: AppColors.danger.withValues(alpha: .35)),
+          border: Border.all(color: tokens.danger.withValues(alpha: .3)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
-                color: AppColors.danger, size: 30),
+            Icon(Icons.cloud_off_rounded, color: tokens.danger, size: 32),
             const SizedBox(height: Spacing.lg),
-            Text('The session paused unexpectedly',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'The session paused unexpectedly',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: tokens.textPrimary,
+              ),
+            ),
             const SizedBox(height: Spacing.sm),
-            Text(session.errorMessage ?? 'Something went wrong.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              session.errorMessage ?? 'Something went wrong.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: tokens.textMuted),
+            ),
             const SizedBox(height: Spacing.xl),
             OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Return home')),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Return home'),
+            ),
           ],
         ),
       ),
@@ -442,16 +496,15 @@ class _SessionScreenState extends State<SessionScreen>
   }
 
   String _stageTitle(_AgentStage stage) => switch (stage) {
-        _AgentStage.research => 'Researcher is finding the signal',
-        _AgentStage.write => 'Writer is shaping the story',
-        _AgentStage.edit => 'Editor is polishing the result',
+        _AgentStage.research => 'Researching sources and outline',
+        _AgentStage.write => 'Drafting the blog post',
+        _AgentStage.edit => 'Polishing the prose',
       };
 
   String _stageDescription(_AgentStage stage) => switch (stage) {
-        _AgentStage.research => 'Building an outline from the strongest ideas.',
-        _AgentStage.write =>
-          'Turning the approved outline into a readable draft.',
-        _AgentStage.edit => 'Checking structure, clarity, and final details.',
+        _AgentStage.research => 'Gathering facts and structuring the argument.',
+        _AgentStage.write => 'Turning the approved outline into a full draft.',
+        _AgentStage.edit => 'Reviewing clarity, tone, and final phrasing.',
       };
 }
 
@@ -460,14 +513,17 @@ class _SessionScreenState extends State<SessionScreen>
 // ---------------------------------------------------------------------------
 
 class _PipelineStepper extends StatelessWidget {
-  const _PipelineStepper(
-      {required this.active,
-      required this.completedThrough,
-      required this.pulse});
+  const _PipelineStepper({
+    required this.active,
+    required this.completedThrough,
+    required this.pulse,
+    required this.tokens,
+  });
 
   final _AgentStage active;
   final int completedThrough;
   final Animation<double> pulse;
+  final AppThemeTokens tokens;
 
   @override
   Widget build(BuildContext context) {
@@ -475,7 +531,7 @@ class _PipelineStepper extends StatelessWidget {
     const icons = [
       Icons.search_rounded,
       Icons.edit_note_rounded,
-      Icons.auto_fix_high_rounded
+      Icons.auto_fix_high_rounded,
     ];
 
     return LayoutBuilder(builder: (context, constraints) {
@@ -491,22 +547,34 @@ class _PipelineStepper extends StatelessWidget {
                   complete: completedThrough >= i,
                   icon: icons[i],
                   pulse: pulse,
+                  tokens: tokens,
                 ),
                 if (showLabels) ...[
                   const SizedBox(width: Spacing.md),
                   Flexible(
-                      child: Text(labels[i],
-                          style: Theme.of(context).textTheme.labelLarge)),
+                    child: Text(
+                      labels[i],
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: active.index == i || completedThrough >= i
+                            ? tokens.textPrimary
+                            : tokens.textMuted,
+                      ),
+                    ),
+                  ),
                 ],
               ]),
             ),
             if (i < labels.length - 1)
               Expanded(
-                  child: Container(
-                      height: 1,
-                      color: completedThrough >= i
-                          ? AppColors.done
-                          : AppColors.border)),
+                child: Container(
+                  height: 1,
+                  color: completedThrough >= i
+                      ? tokens.success
+                      : tokens.border,
+                ),
+              ),
           ],
         ],
       );
@@ -515,37 +583,40 @@ class _PipelineStepper extends StatelessWidget {
 }
 
 class _StepIcon extends StatelessWidget {
-  const _StepIcon(
-      {required this.index,
-      required this.active,
-      required this.complete,
-      required this.icon,
-      required this.pulse});
+  const _StepIcon({
+    required this.index,
+    required this.active,
+    required this.complete,
+    required this.icon,
+    required this.pulse,
+    required this.tokens,
+  });
 
   final int index;
   final bool active;
   final bool complete;
   final IconData icon;
   final Animation<double> pulse;
+  final AppThemeTokens tokens;
 
   @override
   Widget build(BuildContext context) {
     final color = complete
-        ? AppColors.done
+        ? tokens.success
         : active
-            ? AppColors.working
-            : AppColors.textSecondary;
+            ? tokens.accent
+            : tokens.textMuted;
     final child = Container(
-      width: 34,
-      height: 34,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withValues(alpha: active || complete ? .14 : .05),
+        color: color.withValues(alpha: active || complete ? .15 : .05),
         border: Border.all(
-            color: color.withValues(alpha: active || complete ? .7 : .3)),
+          color: color.withValues(alpha: active || complete ? .7 : .3),
+        ),
       ),
-      child:
-          Icon(complete ? Icons.check_rounded : icon, size: 17, color: color),
+      child: Icon(complete ? Icons.check_rounded : icon, size: 16, color: color),
     );
     return active
         ? AnimatedBuilder(

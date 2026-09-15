@@ -11,6 +11,7 @@ import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ThemeController.instance.init();
 
   Object? startupError;
   try {
@@ -31,13 +32,20 @@ class BlogApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Blog Multi-Agent',
-      theme: buildAppTheme(),
-      home: startupError == null
-          ? const AuthGate()
-          : StartupErrorScreen(error: startupError!),
-      debugShowCheckedModeBanner: false,
+    return ListenableBuilder(
+      listenable: ThemeController.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Draftline',
+          theme: buildAppTheme(Brightness.light),
+          darkTheme: buildAppTheme(Brightness.dark),
+          themeMode: ThemeController.instance.themeMode,
+          home: startupError == null
+              ? const AuthGate()
+              : StartupErrorScreen(error: startupError!),
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }

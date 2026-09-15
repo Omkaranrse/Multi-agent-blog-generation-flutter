@@ -22,9 +22,9 @@ class _AuthScreenState extends State<AuthScreen>
     super.initState();
     _iconPulse = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
-      lowerBound: 0.95,
-      upperBound: 1.05,
+      duration: const Duration(milliseconds: 2400),
+      lowerBound: 0.96,
+      upperBound: 1.04,
     )..repeat(reverse: true);
   }
 
@@ -57,150 +57,193 @@ class _AuthScreenState extends State<AuthScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = AppThemeTokens.of(context);
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.background,
-              Color(0xFF181512),
-              Color(0xFF1A1713),
-            ],
+      backgroundColor: tokens.bgPrimary,
+      body: Stack(
+        children: [
+          // Theme toggle at top right
+          Positioned(
+            top: Spacing.xl,
+            right: Spacing.xl,
+            child: IconButton(
+              tooltip: 'Toggle light / dark mode',
+              icon: Icon(
+                Theme.of(context).brightness == Brightness.dark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
+                color: tokens.textMuted,
+              ),
+              onPressed: () => ThemeController.instance.toggle(context),
+            ),
           ),
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Padding(
-              padding: const EdgeInsets.all(Spacing.xxxl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Animated brand icon
-                  AnimatedBuilder(
-                    animation: _iconPulse,
-                    builder: (_, child) =>
-                        Transform.scale(scale: _iconPulse.value, child: child),
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [AppColors.accent, Color(0xFFDFB478)],
+
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Padding(
+                padding: const EdgeInsets.all(Spacing.xxl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Brand Icon
+                    AnimatedBuilder(
+                      animation: _iconPulse,
+                      builder: (_, child) =>
+                          Transform.scale(scale: _iconPulse.value, child: child),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: tokens.accent,
+                          borderRadius: BorderRadius.circular(Radii.lg),
+                          boxShadow: [
+                            BoxShadow(
+                              color: tokens.accent.withValues(alpha: 0.2),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        borderRadius: BorderRadius.circular(Radii.xl),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accent.withValues(alpha: .25),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                        child: Icon(
+                          Icons.edit_note_rounded,
+                          color: tokens.onAccent,
+                          size: 32,
+                        ),
                       ),
-                      child: const Icon(Icons.history_edu_rounded,
-                          color: AppColors.onAccent, size: 30),
                     ),
-                  ),
-                  const SizedBox(height: Spacing.xxxl),
+                    const SizedBox(height: Spacing.xxl),
 
-                  // Title
-                  Text('The Editorial Desk',
-                      style: Theme.of(context).textTheme.headlineSmall),
-                  const SizedBox(height: Spacing.md),
-
-                  // Subtitle
-                  Text(
-                    'Autonomous multi-agent writing with editorial control.\nSign in to commission your first draft.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: Spacing.huge),
-
-                  // Features
-                  const _FeatureRow(
-                    icon: Icons.explore_outlined,
-                    label: 'The Cartographer · The Wordsmith · The Critic',
-                  ),
-                  const SizedBox(height: Spacing.sm),
-                  const _FeatureRow(
-                    icon: Icons.check_circle_outline_rounded,
-                    label: 'Human-in-the-loop review at every juncture',
-                  ),
-                  const SizedBox(height: Spacing.sm),
-                  const _FeatureRow(
-                    icon: Icons.cloud_outlined,
-                    label: 'Manuscript history synced to cloud',
-                  ),
-                  const SizedBox(height: Spacing.xxxl),
-
-                  // Sign-in button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _loading ? null : _signIn,
-                      icon: _loading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: AppColors.onAccent),
-                            )
-                          : const Icon(Icons.login_rounded),
-                      label: Text(
-                          _loading ? 'Signing in…' : 'Continue with Google'),
+                    // Title
+                    Text(
+                      'Welcome to Draftline',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: tokens.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: Spacing.sm),
 
-                  // Error display
-                  if (_error != null) ...[
-                    const SizedBox(height: Spacing.lg),
-                    Container(
+                    // Subtitle
+                    Text(
+                      'AI-assisted blog writing with human control.\nSign in to get started.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: tokens.textMuted,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: Spacing.xxxl),
+
+                    // Feature highlights
+                    _FeatureRow(
+                      tokens: tokens,
+                      icon: Icons.search_rounded,
+                      label: 'Research, Write, and Edit in sequence',
+                    ),
+                    const SizedBox(height: Spacing.md),
+                    _FeatureRow(
+                      tokens: tokens,
+                      icon: Icons.check_circle_outline_rounded,
+                      label: 'Review and steer each agent before proceeding',
+                    ),
+                    const SizedBox(height: Spacing.md),
+                    _FeatureRow(
+                      tokens: tokens,
+                      icon: Icons.cloud_outlined,
+                      label: 'Cloud sync across your devices',
+                    ),
+                    const SizedBox(height: Spacing.xxxl),
+
+                    // Sign-in button
+                    SizedBox(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(Spacing.md),
-                      decoration: BoxDecoration(
-                        color: AppColors.danger.withValues(alpha: .1),
-                        borderRadius: BorderRadius.circular(Radii.sm),
-                        border: Border.all(
-                            color: AppColors.danger.withValues(alpha: .3)),
+                      child: ElevatedButton.icon(
+                        onPressed: _loading ? null : _signIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: tokens.accent,
+                          foregroundColor: tokens.onAccent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(Radii.md),
+                          ),
+                        ),
+                        icon: _loading
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: tokens.onAccent,
+                                ),
+                              )
+                            : const Icon(Icons.login_rounded, size: 18),
+                        label: Text(
+                          _loading ? 'Signing in…' : 'Continue with Google',
+                        ),
                       ),
-                      child: Text(_error!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              color: AppColors.danger, fontSize: 13)),
                     ),
+
+                    // Error message
+                    if (_error != null) ...[
+                      const SizedBox(height: Spacing.lg),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(Spacing.md),
+                        decoration: BoxDecoration(
+                          color: tokens.danger.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(Radii.md),
+                          border: Border.all(
+                            color: tokens.danger.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: tokens.danger, fontSize: 13),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
 class _FeatureRow extends StatelessWidget {
-  const _FeatureRow({required this.icon, required this.label});
-
+  final AppThemeTokens tokens;
   final IconData icon;
   final String label;
+
+  const _FeatureRow({
+    required this.tokens,
+    required this.icon,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: AppColors.textMuted),
+        Icon(icon, size: 18, color: tokens.textMuted),
         const SizedBox(width: Spacing.sm),
-        Text(label,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: AppColors.textMuted)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: tokens.textMuted,
+          ),
+        ),
       ],
     );
   }
